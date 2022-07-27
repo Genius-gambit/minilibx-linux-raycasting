@@ -50,15 +50,6 @@ typedef struct s_player
 	t_wall	wall;
 }				t_player;
 
-typedef struct s_display
-{
-	void	*img;
-	void	*ceil;
-	void	*floor;
-	int		width;
-	int		height;
-}				t_display;
-
 typedef struct s_vars
 {
 	char		**map;
@@ -690,8 +681,6 @@ void	print_player(t_vars *vars)
 int	main(void)
 {
 	t_vars	vars;
-	t_display	img;
-	void	*win;
 
 	init(&vars);
 	vars.map = get_map2d();
