@@ -30,7 +30,7 @@ typedef struct s_wall
 	int		wall_left;
 }				t_wall;
 
-typedef struct s_ray
+typedef struct s_rays
 {
 	float	dist;
 	float	ang;
@@ -38,7 +38,7 @@ typedef struct s_ray
 	float	y;
 	float	width;
 	float	height;
-}				t_ray;
+}				t_rays;
 
 typedef struct s_player
 {
@@ -49,6 +49,15 @@ typedef struct s_player
 	float	dy;
 	t_wall	wall;
 }				t_player;
+
+typedef struct s_display
+{
+	void	*img;
+	void	*ceil;
+	void	*floor;
+	int		width;
+	int		height;
+}				t_display;
 
 typedef struct s_vars
 {
@@ -61,7 +70,7 @@ typedef struct s_vars
 	int			height;
 	int			pause;
 	t_player	p;
-	t_ray		rays[60];
+	t_rays		ray[60];
 }				t_vars;
 
 void	ft_putstr_map(char **map)
@@ -101,32 +110,16 @@ char	**get_map2d(void)
 	char	**map;
 
 	map = malloc(sizeof(char *) * 9);
-	map[0] = strdup("11111111");
+	map[0] = strdup("111");
 	map[1] = strdup("10000001");
 	map[2] = strdup("10000001");
 	map[3] = strdup("10001001");
-	map[4] = strdup("10010P01");
+	map[4] = strdup("1001P001");
 	map[5] = strdup("10000001");
 	map[6] = strdup("10000001");
 	map[7] = strdup("11111111");
 	map[8] = NULL;
 	return (map);
-}
-
-void	init_rays(t_vars *vars)
-{
-	int	count = 0;
-
-	while (count < 60)
-	{
-		vars->rays[count].ang = 0;
-		vars->rays[count].dist = 0;
-		vars->rays[count].height = 0;
-		vars->rays[count].width = 0;
-		vars->rays[count].x = 0;
-		vars->rays[count].y = 0;
-		count++;
-	}
 }
 
 void	init(t_vars *vars)
@@ -148,7 +141,6 @@ void	init(t_vars *vars)
 	vars->p.wall.wall_front = 0;
 	vars->p.wall.wall_left = 0;
 	vars->p.wall.wall_right = 0;
-	init_rays(vars);
 }
 
 void	init_wall_coll(t_vars *vars)
@@ -307,6 +299,38 @@ void	print_points(float x, float y)
 	printf("X: %f, Y: %f\n", x, y);
 }
 
+void	make_line(t_vars *vars, float x, float y)
+{
+	double	m;
+	float	x1;
+	float	x2;
+	float	y1;
+	float	y2;
+	double	incpt;
+
+	x1 = vars->p.x_co * 87.5;
+	y1 = vars->p.y_co * 87.5;
+	x2 = x;
+	y2 = y;
+	m = (y2 - y1) / (x2 - x1);
+	incpt = y1 - (m * x1);
+	if (x1 < x2)
+	{
+		while(x1 <= x2)
+		{
+			draw_point(vars, x1, (m * x1) + incpt);
+			x1++;
+		}
+	}
+	else
+	{
+		while (x1 >= x2)
+		{
+			draw_point(vars, x1, (m * x1) + incpt);
+			x1--;
+		}
+	}
+}
 
 void	draw_width(t_vars *vars, float x, float y)
 {
@@ -327,11 +351,14 @@ void	draw_width(t_vars *vars, float x, float y)
 	}
 }
 
-void	make_line(t_vars *vars, float *x, float *y)
+void	make_wall(t_vars *vars, float *x, float *y)
 {
 	int	count;
+	static int	index;
 
-	count = vars->rays[0].height;
+	if (index == 60)
+		index = 0;
+	count = vars->ray[index].height;
 	draw_width(vars, *x, *y);
 	while (count > 0)
 	{
@@ -339,22 +366,23 @@ void	make_line(t_vars *vars, float *x, float *y)
 		(*y) += 1;
 		count--;
 	}
+	index++;
 }
 
 void	print_rays(t_vars *vars)
 {
 	float	angle;
 	float	x;
-	float	x1;
 	float	y;
 	int		wall;
 	int		count;
+	float	x1;
 
 	angle = vars->p.ang - (PI / 6);
 	if (angle < 0)
 		angle += 2 * PI;
 	count = 60;
-	x1 = 0;
+	x1 = 700;
 	while (count > 0)
 	{
 		x = vars->p.x_co;
@@ -366,25 +394,41 @@ void	print_rays(t_vars *vars)
 			y += (sin(angle) * 0.1);
 			wall = check_wall(vars, x, y);
 		}
-		vars->rays[60 - count].x = x;
-		vars->rays[60 - count].y = y;
-		vars->rays[60 - count].dist = get_dist(vars->p.x_co, vars->p.y_co, x, y);
-		vars->rays[60 - count].height = roundf((BLOCK_SIZE * 700) / (vars->rays[60 - count].dist * 87.5));
-		printf("Dist: %f\n", vars->rays[60 - count].dist);
-		// vars->rays[60 - count].height = roundf(1240 / (vars->rays[60 - count].dist));
-		// draw_point(vars, x * 87.5, y * 87.5);
+		vars->ray[60 - count].x = x;
+		vars->ray[60 - count].y = y;
+		vars->ray[60 - count].dist = get_dist(vars->p.x_co, vars->p.y_co, x, y);
+		vars->ray[60 - count].height = roundf((BLOCK_SIZE * 700) / (vars->ray[60 - count].dist * 87.5));
+		
+		draw_point(vars, x * 87.5, y * 87.5);
+		// make_line(vars, x * 87.5, y * 87.5);
+		y = 350 - (vars->ray[60 - count].height / 2);
+		make_wall(vars, &x1, &y);
 		// print_points(x, y);
 		// print_points(vars->p.x_co, vars->p.y_co);
-		printf("Height: %f\n", vars->rays[60 - count].height);
-		y = 350 - (vars->rays[60 - count].height / 2);
-		make_line(vars, &x1, &y);
-		// if(count == 58)
-		// 	break;
+		// printf("Dist: %f\n", get_dist(vars->p.x_co, vars->p.y_co, x, y) * 32);
 		angle += (PI / 180);
 		x1 += 11.6;
 		count--;
 	}
+	// printf("X: %f, Y: %f\n", x, y);
 }
+	// vars->p.rays.r_ang_left = angle;
+	// angle = vars->p.ang + (PI / 6);
+	// if (angle > 2 * PI)
+	// 	angle -= 2 * PI;
+	// vars->p.rays.r_ang_right = angle;
+	// vars->p.rays.x_co_left = vars->p.x_co
+	// 	+ (cos(vars->p.rays.r_ang_left) * 0.5);
+	// vars->p.rays.y_co_left = vars->p.y_co
+	// 	+ (sin(vars->p.rays.r_ang_left) * 0.5);
+	// vars->p.rays.x_co_right = vars->p.x_co
+	// 	+ (cos(vars->p.rays.r_ang_right) * 0.5);
+	// vars->p.rays.y_co_right = vars->p.y_co
+	// 	+ (sin(vars->p.rays.r_ang_right) * 0.5);
+	// draw_point(vars, vars->p.rays.x_co_left * 87,
+	// 	vars->p.rays.y_co_left * 87);
+	// draw_point(vars, vars->p.rays.x_co_right * 87,
+	// 	vars->p.rays.y_co_right * 87);
 
 void	free_map(char **map)
 {
@@ -506,8 +550,7 @@ void	move_left(t_vars *vars)
 	}
 }
 
-
-void	print_window(t_vars *vars)
+void	print_image(t_vars *vars)
 {
 	int	j;
 	int	i;
@@ -517,39 +560,61 @@ void	print_window(t_vars *vars)
 	col = 0x00AAFF;
 	while (j < 700)
 	{
-		i = 0;
+		i = 700;
 		if (j == 350)
 			col = 0x211100;
-		while (i < 700)
+		while (i < 1400)
 		{
 			mlx_pixel_put(vars->mlx, vars->win, i, j, col);
 			i++;
 		}
 		j++;
 	}
-	vars->p.x_co = 0;
-	vars->p.y_co = 0;
+}
+
+void	print_window(t_vars *vars)
+{
+	int	j;
+	int	i;
+
+	j = 0;
+	vars->img = mlx_xpm_file_to_image(vars->mlx, "xpm_files/wall.xpm",
+			&vars->width, &vars->height);
+	while (vars->map[j] != NULL)
+	{
+		i = 0;
+		while (vars->map[j][i])
+		{
+			if (vars->map[j][i] == '1')
+				mlx_put_image_to_window(vars->mlx, vars->win,
+					vars->img, i * 87, j * 87);
+			i++;
+		}
+		j++;
+	}
+	mlx_destroy_image(vars->mlx, vars->img);
+	print_image(vars);
 }
 
 void	move_player(int keycode, t_vars *vars)
 {
 	if (keycode == ESC)
 		exit_game(vars);
-	// else if (keycode == W)
-	// 	move_frwrd(vars);
-	// else if (keycode == S)
-	// 	move_bckwrd(vars);
-	// else if (keycode == A)
-	// 	move_left(vars);
-	// else if (keycode == D)
-	// 	move_right(vars);
-	// else if (keycode == P)
-	// {
-	// 	if (vars->pause == 1)
-	// 		vars->pause = 0;
-	// 	else
-	// 		vars->pause = 1;
-	// }
+	else if (keycode == W)
+		move_frwrd(vars);
+	else if (keycode == S)
+		move_bckwrd(vars);
+	else if (keycode == A)
+		move_left(vars);
+	else if (keycode == D)
+		move_right(vars);
+	else if (keycode == P)
+	{
+		if (vars->pause == 1)
+			vars->pause = 0;
+		else
+			vars->pause = 1;
+	}
 }
 
 void	rotate_player(int keycode, t_vars *vars)
@@ -571,10 +636,10 @@ int	key_hook(int keycode, t_vars *vars)
 	mlx_destroy_image(vars->mlx, vars->img);
 	print_window(vars);
 	move_player(keycode, vars);
-	// rotate_player(keycode, vars);
-	// draw_point(vars, (vars->p.x_co * 87), (vars->p.y_co * 87));
-	// handle_wall_collision(vars);
-	// print_rays(vars);
+	rotate_player(keycode, vars);
+	draw_point(vars, (vars->p.x_co * 87), (vars->p.y_co * 87));
+	handle_wall_collision(vars);
+	print_rays(vars);
 	ft_putstr_map(vars->map);
 	return (0);
 }
@@ -618,25 +683,25 @@ void	print_player(t_vars *vars)
 	}
 	vars->p.x_co = i + 0.5;
 	vars->p.y_co = j + 0.5;
-	// draw_point(vars, (vars->p.x_co * 87), (vars->p.y_co * 87));
-	// handle_wall_collision(vars);
+	draw_point(vars, (vars->p.x_co * 87), (vars->p.y_co * 87));
+	handle_wall_collision(vars);
 }
 
 int	main(void)
 {
 	t_vars	vars;
+	t_display	img;
 	void	*win;
 
 	init(&vars);
 	vars.map = get_map2d();
 	vars.mlx = mlx_init();
-	vars.win = mlx_new_window(vars.mlx, 700, 700, "Cub3D");
-	win = mlx_new_window(vars.mlx, 700, 700, "Cub3D");
+	vars.win = mlx_new_window(vars.mlx, 1400, 700, "Cub3D");
 	print_window(&vars);
 	print_player(&vars);
 	print_rays(&vars);
 	mlx_hook(vars.win, 2, (1L << 0), key_hook, &vars);
-	// mlx_hook(vars.win, 6, (1L << 6), mouse_hook, &vars);
+	mlx_hook(vars.win, 6, (1L << 6), mouse_hook, &vars);
 	mlx_loop(vars.mlx);
 	return (0);
 }

@@ -1,6 +1,6 @@
 NAME = exec
 
-SRCS = raycasting.c
+SRCS = game.c
 
 OBJS = ${SRCS:.c=.o}
 
