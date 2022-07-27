@@ -387,7 +387,7 @@ void	print_rays(t_vars *vars)
 		}
 		vars->ray[60 - count].x = x;
 		vars->ray[60 - count].y = y;
-		vars->ray[60 - count].dist = get_dist(vars->p.x_co, vars->p.y_co, x, y);
+		vars->ray[60 - count].dist = roundf(get_dist(vars->p.x_co, vars->p.y_co, x, y));
 		vars->ray[60 - count].height = roundf((BLOCK_SIZE * 700) / (vars->ray[60 - count].dist * 87.5));
 		
 		draw_point(vars, x * 87.5, y * 87.5);
