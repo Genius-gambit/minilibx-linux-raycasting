@@ -323,6 +323,40 @@ void	make_line(t_vars *vars, float x, float y)
 	}
 }
 
+void	make_line_vertical(t_vars *vars, float x, float y)
+{
+	double	m;
+	float	x1;
+	float	x2;
+	float	y1;
+	float	y2;
+	double	incpt;
+
+	x1 = vars->p.x_co * 87.5;
+	y1 = vars->p.y_co * 87.5;
+	x2 = x;
+	y2 = y;
+	m = (y2 - y1) / (x2 - x1);
+	printf("Slope: %f\n", m);
+	incpt = y1 - (m * x1);
+	if (y1 < y2)
+	{
+		while(y1 <= y2)
+		{
+			draw_point(vars, (y1 - incpt) / m, x1);
+			y1++;
+		}
+	}
+	else
+	{
+		while (y1 >= y2)
+		{
+			draw_point(vars, (y1 - incpt) / m, x1);
+			y1--;
+		}
+	}
+}
+
 void	draw_width(t_vars *vars, float x, float y)
 {
 	int	i;
@@ -365,6 +399,8 @@ void	print_rays(t_vars *vars)
 	float	angle;
 	float	x;
 	float	y;
+	float	old_x;
+	float	old_y;
 	int		wall;
 	int		count;
 	float	x1;
@@ -381,19 +417,27 @@ void	print_rays(t_vars *vars)
 		wall = 0;
 		while (!wall)
 		{
-			x += (cos(angle) * 0.1);
-			y += (sin(angle) * 0.1);
+			old_x = x;
+			old_y = y;
+			x += (cos(angle) * 0.0001);
+			y += (sin(angle) * 0.0001);
 			wall = check_wall(vars, x, y);
 		}
 		vars->ray[60 - count].x = x;
 		vars->ray[60 - count].y = y;
-		vars->ray[60 - count].dist = roundf(get_dist(vars->p.x_co, vars->p.y_co, x, y));
-		vars->ray[60 - count].height = roundf((BLOCK_SIZE * 700) / (vars->ray[60 - count].dist * 87.5));
-		
+		vars->ray[60 - count].dist = get_dist(vars->p.x_co, vars->p.y_co, x, y);
+		vars->ray[60 - count].height = (BLOCK_SIZE * 700) / (vars->ray[60 - count].dist * 87.5);
 		draw_point(vars, x * 87.5, y * 87.5);
-		// make_line(vars, x * 87.5, y * 87.5);
+		if (angle >= 85 * (PI / 180) && angle <= 95 * (PI / 180))
+			make_line_vertical(vars, x * 87.5, y * 87.5);
+		// else if ((angle >= 240 * (PI / 180)) && (angle <= 300 * (PI / 180)))
+		// 	make_line_vertical(vars, x * 87.5, y * 87.5);
+		// else
+			make_line(vars, x * 87.5, y * 87.5);
 		y = 350 - (vars->ray[60 - count].height / 2);
 		make_wall(vars, &x1, &y);
+		// break;
+		// break;
 		// print_points(x, y);
 		// print_points(vars->p.x_co, vars->p.y_co);
 		// printf("Dist: %f\n", get_dist(vars->p.x_co, vars->p.y_co, x, y) * 32);
