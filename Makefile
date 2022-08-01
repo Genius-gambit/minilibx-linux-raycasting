@@ -1,6 +1,6 @@
 NAME = exec
 
-SRCS = game.c
+SRCS = updated.c
 
 OBJS = ${SRCS:.c=.o}
 
