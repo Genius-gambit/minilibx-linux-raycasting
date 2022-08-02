@@ -1,6 +1,6 @@
 NAME = exec
 
-SRCS = updated.c
+SRCS = final.c
 
 OBJS = ${SRCS:.c=.o}
 
