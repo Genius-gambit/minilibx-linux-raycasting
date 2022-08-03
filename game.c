@@ -433,7 +433,7 @@ void	print_rays(t_vars *vars)
 		// else if ((angle >= 240 * (PI / 180)) && (angle <= 300 * (PI / 180)))
 		// 	make_line_vertical(vars, x * 87.5, y * 87.5);
 		// else
-			// make_line(vars, x * 87.5, y * 87.5);
+			make_line(vars, x * 87.5, y * 87.5);
 		y = 350 - (vars->ray[60 - count].height / 2);
 		make_wall(vars, &x1, &y);
 		// break;
